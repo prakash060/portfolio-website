@@ -1,47 +1,91 @@
-import React, { useState } from 'react';
-import './Header.css';
+import React from 'react';
+import { AppBar, Toolbar, Typography, Button, Badge, IconButton, Box } from '@mui/material';
+import { ShoppingCart, Person } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { getCartItemCount } = useCart();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
   };
 
   return (
-    <header className="header">
-      <div className="header-container">
-        <div className="logo">
-          <h1>Your Name</h1>
-        </div>
+    <AppBar position="static" sx={{ backgroundColor: '#2E7D32' }}>
+      <Toolbar>
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ flexGrow: 1, cursor: 'pointer' }}
+          onClick={() => navigate('/')}
+        >
+          🍽️ FoodHub
+        </Typography>
         
-        <nav className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-          <ul>
-            <li><button onClick={() => scrollToSection('introduction')}>About</button></li>
-            <li><button onClick={() => scrollToSection('experience')}>Experience</button></li>
-            <li><button onClick={() => scrollToSection('education')}>Education</button></li>
-            <li><button onClick={() => scrollToSection('projects')}>Projects</button></li>
-            <li><button onClick={() => scrollToSection('skills')}>Skills</button></li>
-            <li><button onClick={() => scrollToSection('certifications')}>Certifications</button></li>
-            <li><button onClick={() => scrollToSection('contact')}>Contact</button></li>
-          </ul>
-        </nav>
-
-        <div className="hamburger" onClick={toggleMenu}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-    </header>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {user ? (
+            <>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/food-catalog')}
+                sx={{ textTransform: 'none' }}
+              >
+                Menu
+              </Button>
+              
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/orders')}
+                sx={{ textTransform: 'none' }}
+              >
+                Orders
+              </Button>
+              
+              <IconButton 
+                color="inherit" 
+                onClick={() => navigate('/cart')}
+                sx={{ position: 'relative' }}
+              >
+                <Badge badgeContent={getCartItemCount()} color="error">
+                  <ShoppingCart />
+                </Badge>
+              </IconButton>
+              
+              <Button 
+                color="inherit" 
+                startIcon={<Person />}
+                onClick={handleSignOut}
+                sx={{ textTransform: 'none' }}
+              >
+                {user.name}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/signin')}
+                sx={{ textTransform: 'none' }}
+              >
+                Sign In
+              </Button>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate('/signup')}
+                sx={{ textTransform: 'none' }}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 
