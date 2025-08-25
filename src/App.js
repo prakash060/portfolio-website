@@ -15,6 +15,7 @@ import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmation from './components/OrderConfirmation';
 import OrderHistory from './components/OrderHistory';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfileDetails from './components/ProfileDetails';
 
 // Create a custom theme
 const theme = createTheme({
@@ -72,6 +73,14 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/signup" element={<SignUp />} />
                   <Route path="/signin" element={<SignIn />} />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <ProfileDetails />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route 
                     path="/food-catalog" 
                     element={
