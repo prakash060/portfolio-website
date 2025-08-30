@@ -7,12 +7,21 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Import database connection
+const { connectDB } = require('./config/database');
+
+// Import models
+const { User, Food, Order, Review } = require('./models');
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const foodRoutes = require('./routes/foods');
 const orderRoutes = require('./routes/orders');
 const paymentRoutes = require('./routes/payments');
+
+// Connect to database
+connectDB();
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -27,7 +36,8 @@ app.get('/health', (req, res) => {
     status: 'OK',
     message: 'Portfolio Server is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    database: 'MSSQL Database Connected'
   });
 });
 
@@ -65,6 +75,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Portfolio Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🗄️ Database: MSSQL (${process.env.DB_DIALECT || 'mssql'})`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
   console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
 });

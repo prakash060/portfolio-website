@@ -1,246 +1,282 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { getSequelize } = require('../config/database');
 
-const foodSchema = new mongoose.Schema({
+const sequelize = getSequelize();
+
+const Food = sequelize.define('Food', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   name: {
-    type: String,
-    required: [true, 'Please provide a food name'],
-    trim: true,
-    maxlength: [100, 'Food name cannot be more than 100 characters']
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    validate: {
+      len: [1, 100]
+    }
   },
   description: {
-    type: String,
-    required: [true, 'Please provide a description'],
-    maxlength: [500, 'Description cannot be more than 500 characters']
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      len: [1, 500]
+    }
   },
   price: {
-    type: Number,
-    required: [true, 'Please provide a price'],
-    min: [0, 'Price cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
   },
   originalPrice: {
-    type: Number,
-    min: [0, 'Original price cannot be negative']
+    type: DataTypes.DECIMAL(10, 2),
+    validate: {
+      min: 0
+    }
   },
   category: {
-    type: String,
-    required: [true, 'Please provide a category'],
-    enum: ['Pizza', 'Burger', 'Salad', 'Dessert', 'Beverage', 'Appetizer', 'Main Course', 'Fast Food'],
-    default: 'Fast Food'
+    type: DataTypes.ENUM('Pizza', 'Burger', 'Salad', 'Dessert', 'Beverage', 'Appetizer', 'Main Course', 'Fast Food'),
+    defaultValue: 'Fast Food'
   },
   image: {
-    type: String,
-    required: [true, 'Please provide an image URL']
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  images: [{
-    type: String
-  }],
+  images: {
+    type: DataTypes.TEXT, // MSSQL doesn't support JSON, using TEXT instead
+    defaultValue: '[]'
+  },
   rating: {
-    type: Number,
-    min: [0, 'Rating cannot be negative'],
-    max: [5, 'Rating cannot be more than 5'],
-    default: 0
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 5
+    }
   },
   numReviews: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
-  reviews: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    name: {
-      type: String,
-      required: true
-    },
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5
-    },
-    comment: {
-      type: String,
-      required: true
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  ingredients: [{
-    type: String,
-    trim: true
-  }],
-  allergens: [{
-    type: String,
-    enum: ['Gluten', 'Dairy', 'Nuts', 'Eggs', 'Soy', 'Fish', 'Shellfish', 'Wheat'],
-    trim: true
-  }],
-  nutritionalInfo: {
-    calories: Number,
-    protein: Number,
-    carbohydrates: Number,
-    fat: Number,
-    fiber: Number,
-    sugar: Number
+  ingredients: {
+    type: DataTypes.TEXT, // MSSQL doesn't support JSON, using TEXT instead
+    defaultValue: '[]'
+  },
+  allergens: {
+    type: DataTypes.TEXT, // MSSQL doesn't support JSON, using TEXT instead
+    defaultValue: '[]'
+  },
+  calories: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  protein: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  carbohydrates: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  fat: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  fiber: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  sugar: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
   },
   preparationTime: {
-    type: Number, // in minutes
-    min: [0, 'Preparation time cannot be negative']
+    type: DataTypes.INTEGER,
+    validate: {
+      min: 0
+    }
   },
   isVegetarian: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   isVegan: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   isSpicy: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   spiceLevel: {
-    type: Number,
-    min: [0, 'Spice level cannot be negative'],
-    max: [5, 'Spice level cannot be more than 5'],
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 5
+    }
   },
   isAvailable: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
   stockQuantity: {
-    type: Number,
-    min: [0, 'Stock quantity cannot be negative'],
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
   },
-  tags: [{
-    type: String,
-    trim: true
-  }],
+  tags: {
+    type: DataTypes.TEXT, // MSSQL doesn't support JSON, using TEXT instead
+    defaultValue: '[]'
+  },
   featured: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   discount: {
-    type: Number,
-    min: [0, 'Discount cannot be negative'],
-    max: [100, 'Discount cannot be more than 100%'],
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100
+    }
   },
-  discountValidUntil: Date
+  discountValidUntil: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
 }, {
+  tableName: 'foods',
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  hooks: {
+    beforeSave: (food) => {
+      if (!food.originalPrice) {
+        food.originalPrice = food.price;
+      }
+    }
+  }
 });
 
-// Virtual for discounted price
-foodSchema.virtual('discountedPrice').get(function() {
+// Instance methods
+Food.prototype.getDiscountedPrice = function() {
   if (this.discount > 0 && this.discount <= 100) {
     return Math.round((this.price * (100 - this.discount)) / 100);
   }
   return this.price;
-});
+};
 
-// Virtual for isOnSale
-foodSchema.virtual('isOnSale').get(function() {
+Food.prototype.isOnSale = function() {
   return this.discount > 0 && 
          (!this.discountValidUntil || this.discountValidUntil > new Date());
-});
+};
 
-// Indexes for better query performance
-foodSchema.index({ name: 'text', description: 'text' });
-foodSchema.index({ category: 1 });
-foodSchema.index({ price: 1 });
-foodSchema.index({ rating: -1 });
-foodSchema.index({ isAvailable: 1 });
-foodSchema.index({ featured: 1 });
-foodSchema.index({ isVegetarian: 1 });
-foodSchema.index({ isSpicy: 1 });
+Food.prototype.addReview = async function(userId, userName, rating, comment) {
+  // This would need to be implemented with a separate Review model
+  // For now, we'll update the rating and review count
+  const newNumReviews = this.numReviews + 1;
+  const newRating = ((this.rating * this.numReviews) + rating) / newNumReviews;
+  
+  this.rating = newRating;
+  this.numReviews = newNumReviews;
+  
+  return await this.save();
+};
 
-// Pre-save middleware to set original price if not set
-foodSchema.pre('save', function(next) {
-  if (!this.originalPrice) {
-    this.originalPrice = this.price;
+// Helper methods to parse JSON strings
+Food.prototype.getImages = function() {
+  try {
+    return JSON.parse(this.images || '[]');
+  } catch {
+    return [];
   }
-  next();
-});
-
-// Static method to find available foods
-foodSchema.statics.findAvailable = function() {
-  return this.find({ isAvailable: true, stockQuantity: { $gt: 0 } });
 };
 
-// Static method to find foods by category
-foodSchema.statics.findByCategory = function(category) {
-  return this.find({ category, isAvailable: true });
+Food.prototype.getIngredients = function() {
+  try {
+    return JSON.parse(this.ingredients || '[]');
+  } catch {
+    return [];
+  }
 };
 
-// Static method to find featured foods
-foodSchema.statics.findFeatured = function() {
-  return this.find({ featured: true, isAvailable: true });
+Food.prototype.getAllergens = function() {
+  try {
+    return JSON.parse(this.allergens || '[]');
+  } catch {
+    return [];
+  }
 };
 
-// Static method to find foods on sale
-foodSchema.statics.findOnSale = function() {
-  const now = new Date();
-  return this.find({
-    discount: { $gt: 0 },
-    $or: [
-      { discountValidUntil: { $exists: false } },
-      { discountValidUntil: { $gt: now } }
-    ],
-    isAvailable: true
+Food.prototype.getTags = function() {
+  try {
+    return JSON.parse(this.tags || '[]');
+  } catch {
+    return [];
+  }
+};
+
+Food.prototype.updateStock = async function(quantity) {
+  this.stockQuantity = Math.max(0, this.stockQuantity + quantity);
+  this.isAvailable = this.stockQuantity > 0;
+  return await this.save();
+};
+
+// Static methods
+Food.findAvailable = function() {
+  return this.findAll({
+    where: {
+      isAvailable: true,
+      stockQuantity: { [sequelize.Op.gt]: 0 }
+    }
   });
 };
 
-// Static method to search foods
-foodSchema.statics.search = function(query) {
-  return this.find({
-    $text: { $search: query },
-    isAvailable: true
-  }).sort({ score: { $meta: 'textScore' } });
+Food.findByCategory = function(category) {
+  return this.findAll({
+    where: {
+      category,
+      isAvailable: true
+    }
+  });
 };
 
-// Instance method to add review
-foodSchema.methods.addReview = function(userId, userName, rating, comment) {
-  // Check if user already reviewed
-  const existingReviewIndex = this.reviews.findIndex(
-    review => review.user.toString() === userId.toString()
-  );
-
-  if (existingReviewIndex > -1) {
-    // Update existing review
-    this.reviews[existingReviewIndex].rating = rating;
-    this.reviews[existingReviewIndex].comment = comment;
-    this.reviews[existingReviewIndex].createdAt = new Date();
-  } else {
-    // Add new review
-    this.reviews.push({
-      user: userId,
-      name: userName,
-      rating,
-      comment
-    });
-  }
-
-  // Recalculate average rating
-  const totalRating = this.reviews.reduce((sum, review) => sum + review.rating, 0);
-  this.rating = totalRating / this.reviews.length;
-  this.numReviews = this.reviews.length;
-
-  return this.save();
+Food.findFeatured = function() {
+  return this.findAll({
+    where: {
+      featured: true,
+      isAvailable: true
+    }
+  });
 };
 
-// Instance method to update stock
-foodSchema.methods.updateStock = function(quantity) {
-  this.stockQuantity = Math.max(0, this.stockQuantity + quantity);
-  this.isAvailable = this.stockQuantity > 0;
-  return this.save();
+Food.findOnSale = function() {
+  const now = new Date();
+  return this.findAll({
+    where: {
+      discount: { [sequelize.Op.gt]: 0 },
+      [sequelize.Op.or]: [
+        { discountValidUntil: null },
+        { discountValidUntil: { [sequelize.Op.gt]: now } }
+      ],
+      isAvailable: true
+    }
+  });
 };
 
-module.exports = mongoose.model('Food', foodSchema);
+Food.search = function(query) {
+  return this.findAll({
+    where: {
+      [sequelize.Op.or]: [
+        { name: { [sequelize.Op.like]: `%${query}%` } },
+        { description: { [sequelize.Op.like]: `%${query}%` } }
+      ],
+      isAvailable: true
+    }
+  });
+};
+
+module.exports = Food;

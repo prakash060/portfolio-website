@@ -1,166 +1,212 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { getSequelize } = require('../config/database');
 
-const orderSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const sequelize = getSequelize();
+
+const Order = sequelize.define('Order', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  orderNumber: {
-    type: String,
-    unique: true,
-    required: true
-  },
-  items: [{
-    food: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Food',
-      required: true
-    },
-    name: {
-      type: String,
-      required: true
-    },
-    price: {
-      type: Number,
-      required: true
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: [1, 'Quantity must be at least 1']
-    },
-    total: {
-      type: Number,
-      required: true
-    },
-    image: String,
-    specialInstructions: String
-  }],
-  deliveryDetails: {
-    fullName: {
-      type: String,
-      required: true
-    },
-    phone: {
-      type: String,
-      required: true
-    },
-    address: {
-      street: {
-        type: String,
-        required: true
-      },
-      city: {
-        type: String,
-        required: true
-      },
-      state: {
-        type: String,
-        required: true
-      },
-      zipCode: {
-        type: String,
-        required: true
-      },
-      country: {
-        type: String,
-        default: 'India'
-      }
-    },
-    deliveryInstructions: String
-  },
-  paymentDetails: {
-    method: {
-      type: String,
-      enum: ['upi', 'card', 'cash'],
-      required: true
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'processing', 'completed', 'failed', 'refunded'],
-      default: 'pending'
-    },
-    transactionId: String,
-    paymentId: String,
-    amount: {
-      type: Number,
-      required: true
-    },
-    currency: {
-      type: String,
-      default: 'INR'
-    },
-    upiId: String,
-    cardLast4: String,
-    cardBrand: String
-  },
-  pricing: {
-    subtotal: {
-      type: Number,
-      required: true
-    },
-    tax: {
-      type: Number,
-      default: 0
-    },
-    deliveryFee: {
-      type: Number,
-      default: 0
-    },
-    discount: {
-      type: Number,
-      default: 0
-    },
-    total: {
-      type: Number,
-      required: true
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
     }
   },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'],
-    default: 'pending'
+  orderNumber: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
   },
-  estimatedDeliveryTime: Date,
-  actualDeliveryTime: Date,
+  items: {
+    type: DataTypes.TEXT, // MSSQL doesn't support JSON, using TEXT instead
+    allowNull: false,
+    defaultValue: '[]'
+  },
+  deliveryFullName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryPhone: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryStreet: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryCity: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryState: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryZipCode: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  deliveryCountry: {
+    type: DataTypes.STRING,
+    defaultValue: 'India'
+  },
+  deliveryInstructions: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  paymentMethod: {
+    type: DataTypes.ENUM('upi', 'card', 'cash'),
+    allowNull: false
+  },
+  paymentStatus: {
+    type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed', 'refunded'),
+    defaultValue: 'pending'
+  },
+  transactionId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  paymentId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  paymentAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  paymentCurrency: {
+    type: DataTypes.STRING,
+    defaultValue: 'INR'
+  },
+  upiId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  cardLast4: {
+    type: DataTypes.STRING(4),
+    allowNull: true
+  },
+  cardBrand: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  tax: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  deliveryFee: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  discount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+  total: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'),
+    defaultValue: 'pending'
+  },
+  estimatedDeliveryTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  actualDeliveryTime: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   preparationTime: {
-    type: Number, // in minutes
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   deliveryTime: {
-    type: Number, // in minutes
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   isUrgent: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  notes: String,
-  cancellationReason: String,
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  cancellationReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   cancelledBy: {
-    type: String,
-    enum: ['user', 'restaurant', 'system']
+    type: DataTypes.ENUM('user', 'restaurant', 'system'),
+    allowNull: true
   },
-  cancelledAt: Date,
+  cancelledAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   refundAmount: {
-    type: Number,
-    default: 0
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   },
-  refundReason: String,
+  refundReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   refundStatus: {
-    type: String,
-    enum: ['none', 'pending', 'processed', 'failed'],
-    default: 'none'
+    type: DataTypes.ENUM('none', 'pending', 'processed', 'failed'),
+    defaultValue: 'none'
   }
 }, {
+  tableName: 'orders',
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  hooks: {
+    beforeSave: (order) => {
+      if (!order.orderNumber) {
+        order.orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      }
+      
+      // Calculate totals if not set
+      if (!order.subtotal && order.items) {
+        try {
+          const itemsArray = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+          if (Array.isArray(itemsArray) && itemsArray.length > 0) {
+            order.subtotal = itemsArray.reduce((sum, item) => sum + (item.total || 0), 0);
+          }
+        } catch (error) {
+          console.error('Error parsing items:', error);
+          order.subtotal = 0;
+        }
+      }
+      
+      if (!order.total && order.subtotal) {
+        order.total = order.subtotal + order.tax + order.deliveryFee - order.discount;
+      }
+    }
+  }
 });
 
-// Virtual for order status display
-orderSchema.virtual('statusDisplay').get(function() {
+// Helper methods to parse JSON strings
+Order.prototype.getItems = function() {
+  try {
+    return JSON.parse(this.items || '[]');
+  } catch {
+    return [];
+  }
+};
+
+// Instance methods
+Order.prototype.getStatusDisplay = function() {
   const statusMap = {
     pending: 'Payment Pending',
     confirmed: 'Order Confirmed',
@@ -171,76 +217,22 @@ orderSchema.virtual('statusDisplay').get(function() {
     cancelled: 'Cancelled'
   };
   return statusMap[this.status] || this.status;
-});
+};
 
-// Virtual for delivery address
-orderSchema.virtual('deliveryAddress').get(function() {
-  const addr = this.deliveryDetails.address;
-  return `${addr.street}, ${addr.city}, ${addr.state} ${addr.zipCode}`;
-});
+Order.prototype.getDeliveryAddress = function() {
+  return `${this.deliveryStreet}, ${this.deliveryCity}, ${this.deliveryState} ${this.deliveryZipCode}`;
+};
 
-// Virtual for order age
-orderSchema.virtual('orderAge').get(function() {
+Order.prototype.getOrderAge = function() {
   return Date.now() - this.createdAt;
-});
+};
 
-// Virtual for isDelayed
-orderSchema.virtual('isDelayed').get(function() {
+Order.prototype.isDelayed = function() {
   if (!this.estimatedDeliveryTime) return false;
   return Date.now() > this.estimatedDeliveryTime && this.status !== 'delivered';
-});
-
-// Indexes for better query performance
-orderSchema.index({ user: 1, createdAt: -1 });
-orderSchema.index({ orderNumber: 1 });
-orderSchema.index({ status: 1 });
-orderSchema.index({ 'paymentDetails.status': 1 });
-orderSchema.index({ createdAt: -1 });
-orderSchema.index({ estimatedDeliveryTime: 1 });
-
-// Pre-save middleware to generate order number
-orderSchema.pre('save', function(next) {
-  if (!this.orderNumber) {
-    this.orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  }
-  
-  // Calculate totals if not set
-  if (!this.pricing.subtotal) {
-    this.pricing.subtotal = this.items.reduce((sum, item) => sum + item.total, 0);
-  }
-  
-  if (!this.pricing.total) {
-    this.pricing.total = this.pricing.subtotal + this.pricing.tax + this.pricing.deliveryFee - this.pricing.discount;
-  }
-  
-  next();
-});
-
-// Static method to find orders by user
-orderSchema.statics.findByUser = function(userId) {
-  return this.find({ user: userId }).sort({ createdAt: -1 });
 };
 
-// Static method to find pending payment orders
-orderSchema.statics.findPendingPayment = function() {
-  return this.find({ 'paymentDetails.status': 'pending' });
-};
-
-// Static method to find orders by status
-orderSchema.statics.findByStatus = function(status) {
-  return this.find({ status }).sort({ createdAt: -1 });
-};
-
-// Static method to find delayed orders
-orderSchema.statics.findDelayed = function() {
-  return this.find({
-    estimatedDeliveryTime: { $lt: new Date() },
-    status: { $nin: ['delivered', 'cancelled'] }
-  });
-};
-
-// Instance method to update status
-orderSchema.methods.updateStatus = function(newStatus, notes = '') {
+Order.prototype.updateStatus = async function(newStatus, notes = '') {
   this.status = newStatus;
   if (notes) this.notes = notes;
   
@@ -253,44 +245,71 @@ orderSchema.methods.updateStatus = function(newStatus, notes = '') {
     this.actualDeliveryTime = Date.now();
   }
   
-  return this.save();
+  return await this.save();
 };
 
-// Instance method to cancel order
-orderSchema.methods.cancelOrder = function(reason, cancelledBy) {
+Order.prototype.cancelOrder = async function(reason, cancelledBy) {
   this.status = 'cancelled';
   this.cancellationReason = reason;
   this.cancelledBy = cancelledBy;
   this.cancelledAt = Date.now();
   
   // If payment was completed, initiate refund
-  if (this.paymentDetails.status === 'completed') {
+  if (this.paymentStatus === 'completed') {
     this.refundStatus = 'pending';
-    this.refundAmount = this.pricing.total;
+    this.refundAmount = this.total;
     this.refundReason = 'Order cancelled';
   }
   
-  return this.save();
+  return await this.save();
 };
 
-// Instance method to process refund
-orderSchema.methods.processRefund = function(status, reason = '') {
+Order.prototype.processRefund = async function(status, reason = '') {
   this.refundStatus = status;
   if (reason) this.refundReason = reason;
   
   if (status === 'processed') {
-    this.paymentDetails.status = 'refunded';
+    this.paymentStatus = 'refunded';
   }
   
-  return this.save();
+  return await this.save();
 };
 
-// Instance method to calculate delivery time
-orderSchema.methods.calculateDeliveryTime = function() {
+Order.prototype.calculateDeliveryTime = async function() {
   const now = new Date();
   const totalTime = (this.preparationTime || 0) + (this.deliveryTime || 0);
   this.estimatedDeliveryTime = new Date(now.getTime() + totalTime * 60000);
-  return this.save();
+  return await this.save();
 };
 
-module.exports = mongoose.model('Order', orderSchema);
+// Static methods
+Order.findByUser = function(userId) {
+  return this.findAll({
+    where: { userId },
+    order: [['createdAt', 'DESC']]
+  });
+};
+
+Order.findPendingPayment = function() {
+  return this.findAll({
+    where: { paymentStatus: 'pending' }
+  });
+};
+
+Order.findByStatus = function(status) {
+  return this.findAll({
+    where: { status },
+    order: [['createdAt', 'DESC']]
+  });
+};
+
+Order.findDelayed = function() {
+  return this.findAll({
+    where: {
+      estimatedDeliveryTime: { [sequelize.Op.lt]: new Date() },
+      status: { [sequelize.Op.notIn]: ['delivered', 'cancelled'] }
+    }
+  });
+};
+
+module.exports = Order;

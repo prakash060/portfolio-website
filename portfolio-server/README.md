@@ -17,7 +17,7 @@ A robust, production-ready Node.js backend API for the FoodHub portfolio applica
 - 📊 **Analytics** - User statistics, order analytics, revenue tracking
 - 🔄 **Webhooks** - Real-time payment status updates
 - 📱 **Responsive API** - RESTful endpoints with proper error handling
-- 🗄️ **Database** - MongoDB with Mongoose ODM
+- 🗄️ **Database** - Microsoft SQL Server (MSSQL) with Sequelize ORM
 - 📝 **Logging** - Morgan HTTP request logging
 
 ## 🏗️ **Project Structure**
@@ -25,23 +25,27 @@ A robust, production-ready Node.js backend API for the FoodHub portfolio applica
 ```
 portfolio-server/
 ├── config/                 # Configuration files
-│   ├── database.js        # MongoDB connection
-│   └── razorpay.js        # Razorpay payment gateway config
+│   └── database.js        # MSSQL Database connection (Sequelize)
 ├── middleware/            # Custom middleware
 │   ├── auth.js           # Authentication & authorization
 │   └── errorHandler.js   # Global error handling
-├── models/               # Mongoose data models
+├── models/               # Sequelize data models
 │   ├── User.js          # User schema and methods
 │   ├── Food.js          # Food item schema
-│   └── Order.js         # Order management schema
+│   ├── Order.js         # Order management schema
+│   ├── Review.js        # Food review schema
+│   └── index.js         # Model associations
 ├── routes/               # API route handlers
 │   ├── auth.js          # Authentication routes
 │   ├── users.js         # User management routes
 │   ├── foods.js         # Food catalog routes
 │   ├── orders.js        # Order management routes
 │   └── payments.js      # Payment processing routes
+├── scripts/              # Database setup scripts
+│   └── setup-db.js      # Database initialization script
 ├── server.js             # Main server file
 ├── package.json          # Dependencies and scripts
+├── .sequelizerc          # Sequelize CLI configuration
 ├── env.example           # Environment variables template
 └── README.md             # This file
 ```
@@ -50,7 +54,7 @@ portfolio-server/
 
 - **Runtime**: Node.js 16+
 - **Framework**: Express.js 4.18+
-- **Database**: MongoDB with Mongoose ODM
+- **Database**: Microsoft SQL Server (MSSQL) with Sequelize ORM
 - **Authentication**: JWT with bcryptjs
 - **Payment Gateway**: Razorpay
 - **Security**: Helmet, CORS, input validation
@@ -61,7 +65,7 @@ portfolio-server/
 
 ### **Prerequisites**
 - Node.js (v16 or higher)
-- MongoDB (local or cloud instance)
+- Microsoft SQL Server (2016+) or SQL Server Express
 - Razorpay account (for payment processing)
 
 ### **1. Clone and Install**
@@ -76,14 +80,41 @@ Copy `env.example` to `.env` and update values:
 cp env.example .env
 ```
 
-Update `.env` with your configuration:
+Update `.env` with your MSSQL database configuration:
 ```env
 # Server Configuration
 PORT=5000
 NODE_ENV=development
 
-# Database Configuration
-MONGODB_URI=mongodb://localhost:27017/portfolio-foodhub
+# Database Configuration (MSSQL)
+DB_HOST=localhost
+DB_PORT=1433
+DB_NAME=portfolio_foodhub
+DB_DIALECT=mssql
+
+# Authentication Method
+# Set to 'true' for Windows Authentication, 'false' for SQL Server Authentication
+DB_USE_WINDOWS_AUTH=true
+
+# SQL Server Authentication (only needed if DB_USE_WINDOWS_AUTH=false)
+DB_USER=sa
+DB_PASSWORD=your_password_here
+
+# Alternative MySQL Configuration
+# DB_DIALECT=mysql
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_NAME=portfolio_foodhub
+# DB_USER=root
+# DB_PASSWORD=your_password_here
+
+# Alternative PostgreSQL Configuration
+# DB_DIALECT=postgres
+# DB_HOST=localhost
+# DB_PORT=5432
+# DB_NAME=portfolio_foodhub
+# DB_USER=postgres
+# DB_PASSWORD=your_password_here
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key
@@ -96,9 +127,26 @@ RAZORPAY_WEBHOOK_SECRET=YOUR_WEBHOOK_SECRET
 ```
 
 ### **3. Database Setup**
-Ensure MongoDB is running and accessible at your configured URI.
 
-### **4. Start Development Server**
+#### **Option A: Automatic Setup (Recommended)**
+```bash
+npm run db:setup
+```
+
+#### **Option B: Manual Setup**
+1. Create a MSSQL database named `portfolio_foodhub`
+2. Ensure your database user has proper privileges
+
+### **4. Database Migration & Seeding**
+```bash
+# Create database tables
+npm run db:migrate
+
+# Seed with sample data (optional)
+npm run db:seed
+```
+
+### **5. Start Development Server**
 ```bash
 npm run dev
 ```
@@ -111,75 +159,35 @@ The server will start at `http://localhost:5000`
 - `npm run dev` - Start development server with nodemon
 - `npm test` - Run test suite (to be implemented)
 - `npm run seed` - Seed database with sample data (to be implemented)
+- `npm run db:setup` - Initialize MSSQL database
+- `npm run db:migrate` - Run database migrations
+- `npm run db:seed` - Seed database with sample data
+- `npm run db:reset` - Reset database (drop, create, migrate, seed)
 
-## 🌐 **API Endpoints**
+## 🗄️ **Database Models**
 
-### **Authentication Routes**
-```
-POST   /api/auth/register          # User registration
-POST   /api/auth/login             # User login
-GET    /api/auth/me                # Get current user profile
-PUT    /api/auth/update-profile    # Update user profile
-PUT    /api/auth/change-password   # Change password
-POST   /api/auth/forgot-password   # Request password reset
-POST   /api/auth/reset-password    # Reset password
-POST   /api/auth/logout            # User logout
-POST   /api/auth/refresh           # Refresh JWT token
-```
+### **User Model**
+- Authentication fields (email, password)
+- Profile information (name, phone, address)
+- Role-based access control
+- Account status management
 
-### **User Management Routes**
-```
-GET    /api/users                  # Get all users (Admin)
-GET    /api/users/:id              # Get user by ID
-PUT    /api/users/:id              # Update user
-DELETE /api/users/:id              # Delete user (Admin)
-PUT    /api/users/:id/deactivate   # Deactivate user (Admin)
-PUT    /api/users/:id/activate     # Activate user (Admin)
-GET    /api/users/stats/overview   # User statistics (Admin)
-GET    /api/users/search           # Search users (Admin)
-```
+### **Food Model**
+- Food details (name, description, price)
+- Category and dietary information
+- Stock management
+- Rating and review system
 
-### **Food Catalog Routes**
-```
-GET    /api/foods                  # Get all foods with filtering
-GET    /api/foods/:id              # Get food by ID
-GET    /api/foods/categories/list  # Get food categories
-GET    /api/foods/featured/list    # Get featured foods
-GET    /api/foods/sale/list        # Get foods on sale
-GET    /api/foods/search/query     # Search foods
-POST   /api/foods/:id/reviews      # Add food review
-GET    /api/foods/:id/reviews      # Get food reviews
-GET    /api/foods/stats/overview   # Food statistics (Admin)
-POST   /api/foods                  # Create food (Admin)
-PUT    /api/foods/:id              # Update food (Admin)
-DELETE /api/foods/:id              # Delete food (Admin)
-```
+### **Order Model**
+- Order items and quantities
+- Delivery details and instructions
+- Payment information and status
+- Order lifecycle tracking
 
-### **Order Management Routes**
-```
-POST   /api/orders                 # Create new order
-GET    /api/orders/my-orders       # Get user orders
-GET    /api/orders/:id             # Get order by ID
-PUT    /api/orders/:id/status      # Update order status (Admin)
-PUT    /api/orders/:id/cancel      # Cancel order
-GET    /api/orders                 # Get all orders (Admin)
-GET    /api/orders/stats/overview  # Order statistics (Admin)
-GET    /api/orders/pending-payments # Pending payment orders (Admin)
-GET    /api/orders/delayed         # Delayed orders (Admin)
-PUT    /api/orders/:id/refund      # Process refund (Admin)
-POST   /api/orders/:id/calculate-delivery # Calculate delivery time (Admin)
-```
-
-### **Payment Processing Routes**
-```
-POST   /api/payments/create-order  # Create Razorpay order
-POST   /api/payments/verify        # Verify payment signature
-GET    /api/payments/status/:id    # Get payment status
-POST   /api/payments/capture/:id   # Capture payment
-POST   /api/payments/refund/:id    # Process refund
-POST   /api/payments/webhook       # Razorpay webhook handler
-GET    /api/payments/methods       # Get available payment methods
-```
+### **Review Model**
+- User reviews for food items
+- Rating and comment system
+- One review per user per food item
 
 ## 🔐 **Authentication & Authorization**
 
@@ -215,26 +223,6 @@ Admin-only routes use the `admin` middleware to check user role.
 - Digital Wallets
 - Cash on Delivery
 
-## 🗄️ **Database Models**
-
-### **User Model**
-- Authentication fields (email, password)
-- Profile information (name, phone, address)
-- Role-based access control
-- Account status management
-
-### **Food Model**
-- Food details (name, description, price)
-- Category and dietary information
-- Stock management
-- Rating and review system
-
-### **Order Model**
-- Order items and quantities
-- Delivery details and instructions
-- Payment information and status
-- Order lifecycle tracking
-
 ## 🔒 **Security Features**
 
 - **JWT Authentication**: Secure token-based authentication
@@ -243,7 +231,7 @@ Admin-only routes use the `admin` middleware to check user role.
 - **CORS Protection**: Configurable cross-origin resource sharing
 - **Helmet Security**: HTTP security headers
 - **Rate Limiting**: API request rate limiting
-- **SQL Injection Protection**: Mongoose ODM protection
+- **SQL Injection Protection**: Sequelize ORM protection
 
 ## 📊 **Analytics & Monitoring**
 
@@ -268,7 +256,7 @@ Admin-only routes use the `admin` middleware to check user role.
 Ensure all required environment variables are set in production.
 
 ### **Database**
-Use MongoDB Atlas or other cloud MongoDB service for production.
+Use a production SQL database service (AWS RDS, Google Cloud SQL, etc.).
 
 ### **Process Management**
 Use PM2 or similar process manager:
@@ -292,10 +280,11 @@ Create test users and food items for development.
 
 ### **Common Issues**
 
-#### **MongoDB Connection Failed**
-- Check MongoDB service status
-- Verify connection string in `.env`
-- Ensure network access
+#### **Database Connection Failed**
+- Check SQL database service status
+- Verify connection details in `.env`
+- Ensure network access and firewall settings
+- Verify database user privileges
 
 #### **JWT Token Invalid**
 - Check token expiration
@@ -306,6 +295,11 @@ Create test users and food items for development.
 - Verify API keys in `.env`
 - Check webhook configuration
 - Ensure proper signature verification
+
+#### **Database Migration Issues**
+- Ensure database exists and is accessible
+- Check user permissions
+- Verify Sequelize configuration
 
 ## 📚 **API Documentation**
 
@@ -371,8 +365,23 @@ Your backend API demonstrates:
 - **Professional API Design** with RESTful principles
 - **Security Best Practices** with JWT and input validation
 - **Payment Gateway Integration** with Razorpay
-- **Database Design** with MongoDB and Mongoose
+- **Database Design** with MSSQL and Sequelize ORM
 - **Error Handling** with comprehensive error management
 - **Documentation** with detailed API specifications
 
 **🚀 Perfect for showcasing your full-stack development expertise!**
+
+## 🎯 **MSSQL Requirements!**
+ MSSQL Requirements
+SQL Server: 2016 or higher
+SQL Server Express: Free version available
+Port: 1433 (default)
+Authentication: SQL Server Authentication or Windows Authentication
+Browser Service: Must be running for dynamic port discovery
+📚 Available Commands
+npm run dev - Start development server
+npm run db:test - Test MSSQL connection
+npm run db:setup - Initialize MSSQL database
+npm run db:migrate - Run database migrations
+npm run db:seed - Seed sample data
+npm run db:reset - Reset entire database

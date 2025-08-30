@@ -1,116 +1,131 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { getSequelize } = require('../config/database');
 
-const userSchema = new mongoose.Schema({
+const sequelize = getSequelize();
+
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   name: {
-    type: String,
-    required: [true, 'Please provide a name'],
-    trim: true,
-    maxlength: [50, 'Name cannot be more than 50 characters']
-  },
-  email: {
-    type: String,
-    required: [true, 'Please provide an email'],
-    unique: true,
-    lowercase: true,
-    match: [
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email'
-    ]
-  },
-  password: {
-    type: String,
-    required: [true, 'Please provide a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't include password in queries by default
-  },
-  phone: {
-    type: String,
-    match: [/^[0-9]{10}$/, 'Please provide a valid 10-digit phone number']
-  },
-  address: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String,
-    country: {
-      type: String,
-      default: 'India'
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      len: [1, 50]
     }
   },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: [6, 255]
+    }
+  },
+  phone: {
+    type: DataTypes.STRING(10),
+    validate: {
+      is: /^[0-9]{10}$/
+    }
+  },
+  street: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  zipCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  country: {
+    type: DataTypes.STRING,
+    defaultValue: 'India'
+  },
   role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    type: DataTypes.ENUM('user', 'admin'),
+    defaultValue: 'user'
   },
   avatar: {
-    type: String,
-    default: ''
+    type: DataTypes.STRING,
+    defaultValue: ''
   },
   isEmailVerified: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  emailVerificationToken: String,
-  emailVerificationExpires: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-  lastLogin: Date,
+  emailVerificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  emailVerificationExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  passwordResetToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  passwordResetExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  lastLogin: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
+  tableName: 'users',
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
-
-// Virtual for user's full address
-userSchema.virtual('fullAddress').get(function() {
-  if (!this.address.street) return '';
-  return `${this.address.street}, ${this.address.city}, ${this.address.state} ${this.address.zipCode}`;
-});
-
-// Index for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
-
-// Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
-  // Only hash password if it's modified
-  if (!this.isModified('password')) return next();
-  
-  try {
-    // Hash password with cost of 12
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+  hooks: {
+    beforeSave: async (user) => {
+      if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(12);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    }
   }
 });
 
-// Instance method to check password
-userSchema.methods.matchPassword = async function(enteredPassword) {
+// Instance methods
+User.prototype.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Instance method to generate JWT token
-userSchema.methods.getSignedJwtToken = function() {
+User.prototype.getSignedJwtToken = function() {
   return jwt.sign(
-    { id: this._id },
+    { id: this.id },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 };
 
-// Instance method to create password reset token
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = require('crypto').randomBytes(32).toString('hex');
+User.prototype.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
   
-  this.passwordResetToken = require('crypto')
+  this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
@@ -120,11 +135,10 @@ userSchema.methods.createPasswordResetToken = function() {
   return resetToken;
 };
 
-// Instance method to create email verification token
-userSchema.methods.createEmailVerificationToken = function() {
-  const verificationToken = require('crypto').randomBytes(32).toString('hex');
+User.prototype.createEmailVerificationToken = function() {
+  const verificationToken = crypto.randomBytes(32).toString('hex');
   
-  this.emailVerificationToken = require('crypto')
+  this.emailVerificationToken = crypto
     .createHash('sha256')
     .update(verificationToken)
     .digest('hex');
@@ -134,14 +148,19 @@ userSchema.methods.createEmailVerificationToken = function() {
   return verificationToken;
 };
 
-// Static method to find user by email
-userSchema.statics.findByEmail = function(email) {
-  return this.findOne({ email: email.toLowerCase() });
+// Virtual fields (computed properties)
+User.prototype.getFullAddress = function() {
+  if (!this.street) return '';
+  return `${this.street}, ${this.city}, ${this.state} ${this.zipCode}`;
 };
 
-// Static method to find active users
-userSchema.statics.findActive = function() {
-  return this.find({ isActive: true });
+// Static methods
+User.findByEmail = function(email) {
+  return this.findOne({ where: { email: email.toLowerCase() } });
 };
 
-module.exports = mongoose.model('User', userSchema);
+User.findActive = function() {
+  return this.findAll({ where: { isActive: true } });
+};
+
+module.exports = User;
