@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { OrderProvider } from './context/OrderContext';
+import { PaymentProvider } from './context/PaymentContext';
 import Header from './components/Header';
 import Home from './components/Home';
 import SignUp from './components/SignUp';
@@ -65,66 +66,68 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <OrderProvider>
-          <Router>
-            <div className="App">
-              <Header />
-              <main>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <ProfileDetails />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/food-catalog" 
-                    element={
-                      <ProtectedRoute>
-                        <FoodCatalog />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/cart" 
-                    element={
-                      <ProtectedRoute>
-                        <CartPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/checkout" 
-                    element={
-                      <ProtectedRoute>
-                        <CheckoutPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/order-confirmation/:orderId" 
-                    element={
-                      <ProtectedRoute>
-                        <OrderConfirmation />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/orders" 
-                    element={
-                      <ProtectedRoute>
-                        <OrderHistory />
-                      </ProtectedRoute>
-                    } 
-                  />
-                </Routes>
-              </main>
-            </div>
-                      </Router>
+            <PaymentProvider>
+              <Router>
+                <div className="App">
+                  <Header />
+                  <main>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/signup" element={<SignUp />} />
+                      <Route path="/signin" element={<SignIn />} />
+                      <Route 
+                        path="/profile" 
+                        element={
+                          <ProtectedRoute>
+                            <ProfileDetails />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/food-catalog" 
+                        element={
+                          <ProtectedRoute>
+                            <FoodCatalog />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/cart" 
+                        element={
+                          <ProtectedRoute>
+                            <CartPage />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/checkout" 
+                        element={
+                          <ProtectedRoute>
+                            <CheckoutPage />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/order-confirmation/:orderId" 
+                        element={
+                          <ProtectedRoute>
+                            <OrderConfirmation />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      <Route 
+                        path="/orders" 
+                        element={
+                          <ProtectedRoute>
+                            <OrderHistory />
+                          </ProtectedRoute>
+                        } 
+                      />
+                    </Routes>
+                  </main>
+                </div>
+              </Router>
+            </PaymentProvider>
           </OrderProvider>
         </CartProvider>
       </AuthProvider>

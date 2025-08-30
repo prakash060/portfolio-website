@@ -36,6 +36,21 @@ export const OrderProvider = ({ children }) => {
     localStorage.setItem('orders', JSON.stringify(updatedOrders));
   };
 
+  const updateOrderPaymentStatus = (orderId, paymentStatus, paymentDetails = {}) => {
+    const updatedOrders = orders.map(order => 
+      order.id === orderId 
+        ? { 
+            ...order, 
+            paymentStatus,
+            paymentDetails: { ...order.paymentDetails, ...paymentDetails },
+            lastUpdated: new Date().toISOString()
+          }
+        : order
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+  };
+
   const getUserOrders = (userId) => {
     return orders.filter(order => order.userId === userId);
   };
@@ -45,6 +60,9 @@ export const OrderProvider = ({ children }) => {
   };
 
   const getOrderStatus = (order) => {
+    // If order is pending payment, don't show delivery status
+    if (order.status === 'pending') return 'pending';
+    
     const now = new Date();
     const orderDate = new Date(order.orderDate);
     const estimatedDelivery = new Date(order.estimatedDelivery);
@@ -56,7 +74,9 @@ export const OrderProvider = ({ children }) => {
 
   const getActiveOrders = (userId) => {
     const userOrders = getUserOrders(userId);
-    return userOrders.filter(order => getOrderStatus(order) !== 'delivered');
+    return userOrders.filter(order => 
+      order.status !== 'cancelled' && getOrderStatus(order) !== 'delivered'
+    );
   };
 
   const getCompletedOrders = (userId) => {
@@ -64,15 +84,33 @@ export const OrderProvider = ({ children }) => {
     return userOrders.filter(order => getOrderStatus(order) === 'delivered');
   };
 
+  const getPendingPaymentOrders = (userId) => {
+    const userOrders = getUserOrders(userId);
+    return userOrders.filter(order => order.status === 'pending');
+  };
+
+  const cancelOrder = (orderId) => {
+    const updatedOrders = orders.map(order => 
+      order.id === orderId 
+        ? { ...order, status: 'cancelled', cancelledAt: new Date().toISOString() }
+        : order
+    );
+    setOrders(updatedOrders);
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+  };
+
   const value = {
     orders,
     addOrder,
     updateOrderStatus,
+    updateOrderPaymentStatus,
     getUserOrders,
     getOrderById,
     getOrderStatus,
     getActiveOrders,
     getCompletedOrders,
+    getPendingPaymentOrders,
+    cancelOrder,
     loading
   };
 

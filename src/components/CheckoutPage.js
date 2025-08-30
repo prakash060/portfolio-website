@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
+import UpiPayment from './UpiPayment';
 
 const steps = ['Delivery Details', 'Payment Method', 'Order Review'];
 
@@ -38,6 +39,8 @@ const CheckoutPage = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [showUpiPayment, setShowUpiPayment] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState(null);
 
   // Form states
   const [deliveryDetails, setDeliveryDetails] = useState({
@@ -125,6 +128,32 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (paymentMethod === 'upi') {
+      // For UPI, create pending order and show payment dialog
+      const newOrderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      const order = {
+        id: newOrderId,
+        userId: user.id,
+        items: cart,
+        deliveryDetails,
+        paymentMethod,
+        upiDetails,
+        subtotal: total,
+        deliveryFee: calculateDeliveryFee(),
+        tax: calculateTax(),
+        total: calculateTotal(),
+        status: 'pending', // Pending until payment is confirmed
+        orderDate: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 45 * 60000).toISOString()
+      };
+
+      setPendingOrder(order);
+      setShowUpiPayment(true);
+      return;
+    }
+
+    // For other payment methods, proceed with normal flow
     setLoading(true);
     
     try {
@@ -135,23 +164,23 @@ const CheckoutPage = () => {
       const newOrderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       setOrderId(newOrderId);
       
-             // Create order object
-       const order = {
-         id: newOrderId,
-         userId: user.id,
-         items: cart,
-         deliveryDetails,
-         paymentMethod,
-         cardDetails: paymentMethod === 'card' ? cardDetails : null,
-         upiDetails: paymentMethod === 'upi' ? upiDetails : null,
-         subtotal: total,
-         deliveryFee: calculateDeliveryFee(),
-         tax: calculateTax(),
-         total: calculateTotal(),
-         status: 'confirmed',
-         orderDate: new Date().toISOString(),
-         estimatedDelivery: new Date(Date.now() + 45 * 60000).toISOString() // 45 minutes from now
-       };
+      // Create order object
+      const order = {
+        id: newOrderId,
+        userId: user.id,
+        items: cart,
+        deliveryDetails,
+        paymentMethod,
+        cardDetails: paymentMethod === 'card' ? cardDetails : null,
+        upiDetails: paymentMethod === 'upi' ? upiDetails : null,
+        subtotal: total,
+        deliveryFee: calculateDeliveryFee(),
+        tax: calculateTax(),
+        total: calculateTotal(),
+        status: 'confirmed',
+        orderDate: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 45 * 60000).toISOString()
+      };
 
       // Add order using context
       addOrder(order);
@@ -168,6 +197,27 @@ const CheckoutPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpiPaymentComplete = (order) => {
+    // Update order status to confirmed
+    order.status = 'confirmed';
+    addOrder(order);
+    
+    // Clear cart
+    clearCart();
+    
+    // Navigate to order confirmation
+    navigate(`/order-confirmation/${order.id}`);
+  };
+
+  const handleUpiPaymentFailed = (order) => {
+    // Order remains pending, user can retry
+    setShowUpiPayment(false);
+    setPendingOrder(null);
+    
+    // Show error message
+    alert('UPI payment failed. Please try again or choose a different payment method.');
   };
 
   const renderDeliveryStep = () => (
@@ -308,7 +358,15 @@ const CheckoutPage = () => {
           </Grid>
           <Grid item xs={12}>
             <Alert severity="info">
-              You will receive a payment request on your UPI app. Please complete the payment to confirm your order.
+              <Typography variant="body2">
+                <strong>UPI Payment Process:</strong>
+              </Typography>
+              <Typography variant="body2" component="div">
+                1. Enter your UPI ID above
+                2. Click "Place Order" to initiate payment
+                3. Complete payment in your UPI app
+                4. Order will be confirmed after successful payment
+              </Typography>
             </Alert>
           </Grid>
         </>
@@ -350,11 +408,19 @@ const CheckoutPage = () => {
         
         <Divider sx={{ my: 2 }} />
         
-                 <Typography variant="h6" gutterBottom>Payment Method</Typography>
-         <Typography>
-           {paymentMethod === 'card' ? 'Credit/Debit Card' : 
-            paymentMethod === 'upi' ? 'UPI Payment' : 'Cash on Delivery'}
-         </Typography>
+        <Typography variant="h6" gutterBottom>Payment Method</Typography>
+        <Typography>
+          {paymentMethod === 'card' ? 'Credit/Debit Card' : 
+           paymentMethod === 'upi' ? 'UPI Payment' : 'Cash on Delivery'}
+        </Typography>
+        
+        {paymentMethod === 'upi' && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Note:</strong> Your order will be confirmed only after successful UPI payment.
+            </Typography>
+          </Alert>
+        )}
       </Grid>
       
       <Grid item xs={12} md={4}>
@@ -421,61 +487,72 @@ const CheckoutPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', color: '#2E7D32', mb: 4 }}>
-        🛒 Checkout
-      </Typography>
-      
-      <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-      
-      <Card sx={{ p: 4 }}>
-        {getStepContent(activeStep)}
+    <>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ textAlign: 'center', color: '#2E7D32', mb: 4 }}>
+          🛒 Checkout
+        </Typography>
         
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button
-            disabled={activeStep === 0}
-            onClick={handleBack}
-            sx={{ mr: 1 }}
-          >
-            Back
-          </Button>
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+        
+        <Card sx={{ p: 4 }}>
+          {getStepContent(activeStep)}
           
-          <Box>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                variant="contained"
-                onClick={handlePlaceOrder}
-                disabled={loading}
-                sx={{ 
-                  backgroundColor: '#2E7D32',
-                  '&:hover': { backgroundColor: '#1B5E20' }
-                }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Place Order'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!canProceed()}
-                sx={{ 
-                  backgroundColor: '#2E7D32',
-                  '&:hover': { backgroundColor: '#1B5E20' }
-                }}
-              >
-                Next
-              </Button>
-            )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+            <Button
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              sx={{ mr: 1 }}
+            >
+              Back
+            </Button>
+            
+            <Box>
+              {activeStep === steps.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handlePlaceOrder}
+                  disabled={loading}
+                  sx={{ 
+                    backgroundColor: '#2E7D32',
+                    '&:hover': { backgroundColor: '#1B5E20' }
+                  }}
+                >
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Place Order'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  disabled={!canProceed()}
+                  sx={{ 
+                    backgroundColor: '#2E7D32',
+                    '&:hover': { backgroundColor: '#1B5E20' }
+                  }}
+                >
+                  Next
+                </Button>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Card>
-    </Container>
+        </Card>
+      </Container>
+
+      {/* UPI Payment Dialog */}
+      <UpiPayment
+        open={showUpiPayment}
+        onClose={() => setShowUpiPayment(false)}
+        orderDetails={pendingOrder}
+        onPaymentComplete={handleUpiPaymentComplete}
+        onPaymentFailed={handleUpiPaymentFailed}
+      />
+    </>
   );
 };
 
