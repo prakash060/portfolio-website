@@ -1,6 +1,6 @@
 # Portfolio Website - FoodHub Application
 
-A comprehensive portfolio project showcasing a modern food delivery web application with real-time UPI payments, built using React and Material-UI.
+A comprehensive portfolio project showcasing a modern food delivery web application with real-time UPI payments, built using React and Material-UI, with a complete Node.js backend API.
 
 ## 🏗️ **Project Structure**
 
@@ -11,6 +11,14 @@ portfolio-website/
 │   ├── public/             # Static assets
 │   ├── package.json        # Dependencies
 │   └── README.md           # Client setup guide
+├── portfolio-server/        # 🆕 Backend Node.js API
+│   ├── config/             # Configuration files
+│   ├── middleware/         # Custom middleware
+│   ├── models/             # Database models
+│   ├── routes/             # API route handlers
+│   ├── server.js           # Main server file
+│   ├── package.json        # Dependencies
+│   └── README.md           # Server setup guide
 ├── .git/                   # Git repository
 ├── .gitignore             # Git ignore rules
 ├── node_modules/          # Dependencies (root level)
@@ -28,49 +36,73 @@ The main React application featuring:
 - **Order Management** - Track orders and delivery status
 - **Responsive Design** - Works on all devices
 
+### **portfolio-server/** 🆕
+A production-ready Node.js backend API featuring:
+- **RESTful API Design** - Professional API architecture
+- **User Authentication** - JWT-based secure authentication
+- **Database Management** - MongoDB with Mongoose ODM
+- **Payment Processing** - Complete Razorpay integration
+- **Order Management** - Full order lifecycle handling
+- **Admin Dashboard** - Comprehensive admin controls
+- **Security Features** - Helmet, CORS, input validation
+- **Webhook Support** - Real-time payment updates
+
 ## 🛠️ **Technology Stack**
 
-- **Frontend**: React 18 + Material-UI v5
+### **Frontend (portfolio-client)**
+- **Frontend Framework**: React 18 + Material-UI v5
 - **State Management**: React Context API
 - **Routing**: React Router v6
 - **Payment**: Razorpay UPI integration
 - **Styling**: CSS-in-JS with MUI System
 - **Build Tool**: Create React App
 
+### **Backend (portfolio-server)** 🆕
+- **Runtime**: Node.js 16+
+- **Framework**: Express.js 4.18+
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JWT with bcryptjs
+- **Payment Gateway**: Razorpay
+- **Security**: Helmet, CORS, input validation
+- **Logging**: Morgan HTTP logger
+
 ## 📦 **Quick Start**
 
-### **1. Navigate to Client**
+### **Frontend Development**
 ```bash
 cd portfolio-client
-```
-
-### **2. Install Dependencies**
-```bash
 npm install
-```
-
-### **3. Start Development Server**
-```bash
 npm start
 ```
 
-The application will open at `http://localhost:3000`
+### **Backend Development** 🆕
+```bash
+cd portfolio-server
+npm install
+cp env.example .env
+# Update .env with your configuration
+npm run dev
+```
+
+The applications will open at:
+- **Frontend**: `http://localhost:3000`
+- **Backend**: `http://localhost:5000`
 
 ## 🎯 **Portfolio Highlights**
 
 This project demonstrates your expertise in:
 
-### **Frontend Development**
-- Modern React patterns and hooks
-- Component-based architecture
-- State management with Context API
-- Responsive design principles
+### **Full-Stack Development** 🆕
+- **Frontend**: Modern React patterns and hooks
+- **Backend**: Professional Node.js API design
+- **Database**: MongoDB schema design and management
+- **Integration**: Seamless frontend-backend communication
 
 ### **Payment Integration**
 - Real-time UPI payment processing
 - Payment gateway integration (Razorpay)
 - Secure payment verification
-- Error handling and user feedback
+- Webhook handling for real-time updates
 
 ### **User Experience**
 - Intuitive navigation and workflows
@@ -79,19 +111,26 @@ This project demonstrates your expertise in:
 - Accessibility considerations
 
 ### **Technical Skills**
-- API integration and data management
-- Form validation and error handling
-- Route protection and security
+- API design and development
+- Database modeling and optimization
+- Security best practices
 - Performance optimization
 
 ## 🔧 **Development Commands**
 
+### **Frontend (portfolio-client)**
 ```bash
-# From portfolio-client directory
 npm start          # Start development server
 npm run build      # Build for production
 npm test           # Run tests
-npm run eject      # Eject from CRA (irreversible)
+```
+
+### **Backend (portfolio-server)** 🆕
+```bash
+npm start          # Start production server
+npm run dev        # Start development server
+npm test           # Run test suite
+npm run seed       # Seed database (to be implemented)
 ```
 
 ## 📱 **Features Overview**
@@ -103,10 +142,14 @@ npm run eject      # Eject from CRA (irreversible)
 - ✅ **UPI Payments** - Real-time payment via Razorpay
 - ✅ **Order Tracking** - View order history and status
 - ✅ **User Profiles** - Manage account information
-- ✅ **Responsive Design** - Works on all screen sizes
+- ✅ **Admin Dashboard** - Complete admin controls 🆕
+- ✅ **API Management** - RESTful backend services 🆕
+- ✅ **Database Design** - MongoDB with Mongoose 🆕
+- ✅ **Security Features** - JWT, CORS, input validation 🆕
 
 ## 🌐 **Application Routes**
 
+### **Frontend Routes**
 - `/` - Home page with food showcase
 - `/signup` - User registration
 - `/signin` - User login
@@ -116,6 +159,13 @@ npm run eject      # Eject from CRA (irreversible)
 - `/checkout` - Order checkout
 - `/orders` - Order history
 - `/order-confirmation/:id` - Order confirmation
+
+### **Backend API Routes** 🆕
+- `/api/auth/*` - Authentication endpoints
+- `/api/users/*` - User management
+- `/api/foods/*` - Food catalog management
+- `/api/orders/*` - Order processing
+- `/api/payments/*` - Payment processing
 
 ## 💳 **Payment Features**
 
@@ -136,26 +186,39 @@ npm run eject      # Eject from CRA (irreversible)
 - Payment signature verification
 - Input validation and sanitization
 - Secure session management
+- JWT token authentication 🆕
+- CORS protection 🆕
+- Helmet security headers 🆕
 
 ## 📚 **Documentation**
 
 - **portfolio-client/README.md** - Detailed client setup guide
+- **portfolio-server/README.md** - 🆕 Complete server setup guide
 - **portfolio-client/RAZORPAY_SETUP.md** - Payment integration guide
 - **Inline Code Comments** - Comprehensive code documentation
 
 ## 🚀 **Deployment**
 
-### **Build for Production**
+### **Frontend Deployment**
 ```bash
 cd portfolio-client
 npm run build
 ```
 
+### **Backend Deployment** 🆕
+```bash
+cd portfolio-server
+npm start
+# Or use PM2 for production
+pm2 start server.js --name "portfolio-server"
+```
+
 ### **Deploy Options**
-- **Netlify**: Drag and drop `build` folder
-- **Vercel**: Connect GitHub repository
-- **AWS S3**: Upload `build` folder
-- **Custom Server**: Serve static files
+- **Netlify**: Frontend deployment
+- **Vercel**: Full-stack deployment
+- **AWS**: EC2 for backend, S3 for frontend
+- **Heroku**: Full-stack deployment
+- **DigitalOcean**: Droplet deployment
 
 ## 🧪 **Testing**
 
@@ -163,6 +226,8 @@ npm run build
 - User authentication flows
 - Shopping cart operations
 - Payment processing
+- API endpoint testing 🆕
+- Database operations 🆕
 - Responsive design
 - Cross-browser compatibility
 
@@ -175,11 +240,14 @@ npm run build
 
 The project is organized into logical sections:
 
+- **portfolio-client**: Complete React frontend application
+- **portfolio-server**: 🆕 Complete Node.js backend API
 - **Components**: Reusable UI components
 - **Context**: State management and data providers
-- **Data**: Static data and mock APIs
-- **Config**: Configuration files and settings
-- **Documentation**: Setup guides and instructions
+- **Models**: Database schemas and methods 🆕
+- **Routes**: API endpoint handlers 🆕
+- **Middleware**: Authentication and error handling 🆕
+- **Configuration**: Environment and service configs 🆕
 
 ## 🤝 **Contributing**
 
@@ -191,7 +259,7 @@ The project is organized into logical sections:
 
 ## 📞 **Support & Issues**
 
-- Check the detailed README in `portfolio-client/`
+- Check the detailed README files in each project folder
 - Review inline code comments
 - Refer to RAZORPAY_SETUP.md for payment issues
 - Report bugs via GitHub issues
@@ -205,10 +273,11 @@ This project is for portfolio demonstration purposes.
 ## 🎯 **Ready to Showcase!**
 
 Your FoodHub application demonstrates:
-- **Full-stack thinking** with frontend implementation
+- **Full-stack thinking** with complete frontend and backend
 - **Modern development practices** and best practices
-- **Real-world integration** with payment gateways
+- **Real-world integration** with payment gateways and databases
 - **Professional UI/UX** design skills
 - **Comprehensive documentation** and setup guides
+- **Production-ready architecture** with security and scalability 🆕
 
-**🚀 Perfect for showcasing your React and payment integration expertise!**
+**🚀 Perfect for showcasing your complete full-stack development expertise!**
