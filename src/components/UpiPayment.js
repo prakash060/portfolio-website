@@ -23,7 +23,8 @@ import {
   CheckCircle, 
   Error, 
   Payment,
-  Timer
+  Timer,
+  Security
 } from '@mui/icons-material';
 import { usePayment } from '../context/PaymentContext';
 
@@ -32,6 +33,7 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
   const [upiId, setUpiId] = useState('');
   const [step, setStep] = useState(0); // 0: UPI ID input, 1: Payment processing, 2: Result
   const [countdown, setCountdown] = useState(30); // 30 second countdown for demo
+  const [verificationStatus, setVerificationStatus] = useState('initial'); // 'initial', 'verifying', 'verified'
 
   const steps = ['Enter UPI ID', 'Processing Payment', 'Payment Result'];
 
@@ -40,6 +42,7 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
       setStep(0);
       setUpiId('');
       resetPaymentStatus();
+      setVerificationStatus('initial');
     }
   }, [open, resetPaymentStatus]);
 
@@ -56,6 +59,7 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
     
     setStep(1);
     setCountdown(30);
+    setVerificationStatus('verifying');
     
     try {
       const result = await initiateUpiPayment(orderDetails, upiId);
@@ -109,9 +113,9 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
         <Typography variant="body2" component="div">
           1. Enter your UPI ID above
           2. Click "Initiate Payment" 
-          3. You'll receive a payment request on your UPI app
-          4. Complete the payment in your UPI app
-          5. Wait for confirmation
+          3. Razorpay payment modal will open
+          4. Complete the payment using your preferred UPI app
+          5. Payment will be verified automatically
         </Typography>
       </Alert>
 
@@ -125,6 +129,12 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
           <Typography variant="caption">Use UPI App</Typography>
         </Box>
       </Box>
+      
+      <Alert severity="success" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          <strong>Secure Payment:</strong> Powered by Razorpay - India's leading payment gateway
+        </Typography>
+      </Alert>
     </Box>
   );
 
@@ -154,10 +164,10 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
 
       <Alert severity="warning" sx={{ mb: 3 }}>
         <Typography variant="body2">
-          <strong>Please complete the payment in your UPI app now!</strong>
+          <strong>Please complete the payment in Razorpay modal!</strong>
         </Typography>
         <Typography variant="body2">
-          You should have received a payment request. Please approve it to continue.
+          The Razorpay payment modal should have opened. Complete your payment there.
         </Typography>
       </Alert>
 
@@ -171,6 +181,15 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
         Don't close this window while payment is processing
       </Typography>
+
+      {verificationStatus === 'verifying' && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          <Typography variant="body2">
+            <Security sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+            Verifying payment with Razorpay...
+          </Typography>
+        </Alert>
+      )}
     </Box>
   );
 
@@ -248,7 +267,7 @@ const UpiPayment = ({ open, onClose, orderDetails, onPaymentComplete, onPaymentF
       <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
           <Payment sx={{ color: '#2E7D32' }} />
-          <Typography variant="h6">UPI Payment</Typography>
+          <Typography variant="h6">UPI Payment via Razorpay</Typography>
         </Box>
       </DialogTitle>
       
